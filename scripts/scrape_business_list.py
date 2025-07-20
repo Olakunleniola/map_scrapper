@@ -151,11 +151,11 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
 def main():
     """Main function to run the business list scraper"""
     if len(sys.argv) < 2:
-        print("Usage: python scrape_hotel_list.py <area> [search_type] [city] [country]")
+        print("Usage: python scrape_business_list.py <area> [search_type] [city] [country]")
         print("Examples:")
-        print("  python scrape_hotel_list.py 'Ikeja'")
-        print("  python scrape_hotel_list.py 'Ikeja' 'hotels' 'Lagos' 'Nigeria'")
-        print("  python scrape_hotel_list.py 'Victoria Island' 'restaurants' 'Lagos' 'Nigeria'")
+        print("  python scrape_business_list.py 'Ikeja'")
+        print("  python scrape_business_list.py 'Ikeja' 'hotels' 'Lagos' 'Nigeria'")
+        print("  python scrape_business_list.py 'Victoria Island' 'restaurants' 'Lagos' 'Nigeria'")
         sys.exit(1)
     
     area = sys.argv[1]

@@ -91,8 +91,8 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
 def main():
     """Main function to run the hotel data extractor"""
     if len(sys.argv) < 2:
-        print("Usage: python extract_hotel_data.py <area>")
-        print("Example: python extract_hotel_data.py 'Ikeja, Lagos'")
+        print("Usage: python extract_business_data.py <area>")
+        print("Example: python extract_business_data.py 'Ikeja, Lagos'")
         sys.exit(1)
     
     area = sys.argv[1]
@@ -127,7 +127,7 @@ def main():
     
     if not list_filename:
         print(f"Business list file not found. Tried business types: {possible_business_types}")
-        print("Please run scrape_hotel_list.py first")
+        print("Please run scrape_business_list.py first")
         sys.exit(1)
     
     hotels = read_csv(list_filename)

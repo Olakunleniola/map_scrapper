@@ -55,8 +55,8 @@ def test_files():
     print("\nTesting required files...")
     
     required_files = [
-        'scripts/scrape_hotel_list.py',
-        'scripts/extract_hotel_data.py',
+        'scripts/scrape_business_list.py',
+        'scripts/extract_business_data.py',
         'scripts/verify_whatsapp_numbers.py',
         'scripts/run_scraping_pipeline.py',
         'lib/__init__.py',

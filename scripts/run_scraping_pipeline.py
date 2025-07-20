@@ -55,7 +55,7 @@ def run_pipeline(area: str, search_type: str = "hotels", city: str = "Lagos", co
         from scripts.extract_hotel_data import main as extract_main
         # Temporarily modify sys.argv for the extract script
         original_argv = sys.argv.copy()
-        sys.argv = ['extract_hotel_data.py', area]
+        sys.argv = ['extract_business_data.py', area]
         extract_main()
         sys.argv = original_argv
         print(f"✅ {search_type.capitalize()} data extraction completed")

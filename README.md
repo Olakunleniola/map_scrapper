@@ -7,8 +7,8 @@ A comprehensive Python tool for scraping business data from Google Maps and veri
 ```
 Map Scapper/
 ├── scripts/                    # Main execution scripts
-│   ├── scrape_hotel_list.py    # Phase 1: Extract business names and links
-│   ├── extract_hotel_data.py   # Phase 2: Extract detailed business information
+│   ├── scrape_business_list.py    # Phase 1: Extract business names and links
+│   ├── extract_business_data.py   # Phase 2: Extract detailed business information
 │   ├── verify_whatsapp_numbers.py  # Phase 3: Verify WhatsApp numbers
 │   └── run_scraping_pipeline.py    # Complete pipeline runner
 ├── lib/                        # Utility libraries
@@ -74,16 +74,16 @@ python scripts/run_scraping_pipeline.py "Ikeja" "hotels" "Lagos" "Nigeria" --ski
 
 ```bash
 # Step 1: Scrape business list (default: hotels)
-python scripts/scrape_hotel_list.py "Ikeja"
+python scripts/scrape_business_list.py "Ikeja"
 
 # Step 1: Custom business type
-python scripts/scrape_hotel_list.py "Ikeja" "restaurants"
+python scripts/scrape_business_list.py "Ikeja" "restaurants"
 
 # Step 1: Full custom search
-python scripts/scrape_hotel_list.py "Victoria Island" "hotels" "Lagos" "Nigeria"
+python scripts/scrape_business_list.py "Victoria Island" "hotels" "Lagos" "Nigeria"
 
 # Step 2: Extract detailed data
-python scripts/extract_hotel_data.py "Ikeja"
+python scripts/extract_business_data.py "Ikeja"
 
 # Step 3: Verify WhatsApp numbers
 python scripts/verify_whatsapp_numbers.py "Ikeja"
@@ -232,4 +232,3 @@ This project is for educational and research purposes. Please respect Google's t
 ## 🤝 Contributing
 
 Feel free to submit issues and enhancement requests!
- 
