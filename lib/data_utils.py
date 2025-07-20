@@ -142,30 +142,49 @@ def read_csv(filename: str) -> List[Dict]:
         logging.error(f"Error reading {filename}: {e}")
         return []
 
-def get_data_file_path(data_type: str, filename: str) -> str:
+def get_data_file_path(business_type: str, area: str, file_type: str, filename: str | None = None) -> str:
     """
-    Get the full path for a data file based on type
+    Get the full path for a data file based on business type and area
     
     Args:
-        data_type (str): Type of data ('hotel_data', 'whatsapp_data')
-        filename (str): Name of the file
+        business_type (str): Type of business ('hotels', 'restaurants', 'banks', etc.)
+        area (str): Area name (e.g., 'ikeja', 'alimosho')
+        file_type (str): Type of file ('list', 'data')
+        filename (str, optional): Custom filename. If None, generates: {area}_{business_type}_{file_type}.csv
     
     Returns:
         str: Full path to the data file
     """
-    return os.path.join('data', data_type, filename)
+    # Clean area name for folder/file naming
+    clean_area = area.replace(" ", "_").replace(",", "").lower()
+    clean_business_type = business_type.lower()
+    
+    # Generate filename if not provided
+    if filename is None:
+        filename = f"{clean_area}_{clean_business_type}_{file_type}.csv"
+    
+    # Create path: data/{business_type}/{area}/{filename}
+    return os.path.join('data', clean_business_type, clean_area, filename)
 
-def ensure_data_directory(data_type: str) -> bool:
+def ensure_data_directory(business_type: str, area: str | None = None) -> bool:
     """
-    Ensure data directory exists
+    Ensure data directory exists for business type and area
     
     Args:
-        data_type (str): Type of data directory to create
+        business_type (str): Type of business ('hotels', 'restaurants', 'banks', etc.)
+        area (str, optional): Area name. If provided, creates area subdirectory
     
     Returns:
         bool: True if directory exists or was created successfully
     """
-    dir_path = os.path.join('data', data_type)
+    clean_business_type = business_type.lower()
+    
+    if area:
+        clean_area = area.replace(" ", "_").replace(",", "").lower()
+        dir_path = os.path.join('data', clean_business_type, clean_area)
+    else:
+        dir_path = os.path.join('data', clean_business_type)
+    
     try:
         os.makedirs(dir_path, exist_ok=True)
         return True

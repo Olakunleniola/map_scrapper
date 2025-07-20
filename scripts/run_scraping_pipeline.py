@@ -32,8 +32,8 @@ def run_pipeline(area: str, search_type: str = "hotels", city: str = "Lagos", co
     setup_logging(f'pipeline_{search_type}_{area.replace(" ", "_")}.log')
     
     # Ensure all directories exist
-    ensure_data_directory('hotel_data')
-    ensure_data_directory('whatsapp_data')
+    ensure_data_directory(search_type, area)
+    ensure_data_directory('whatsapp_data', area)
     
     # Step 1: Scrape business list
     print(f"\n📋 Step 1: Scraping {search_type} list...")
@@ -85,11 +85,11 @@ def run_pipeline(area: str, search_type: str = "hotels", city: str = "Lagos", co
     print("\n🎉 Pipeline completed successfully!")
     print("=" * 50)
     print(f"📁 Data saved in:")
-    print(f"   - {search_type.capitalize()} list: data/hotel_data/{area.replace(' ', '_')}_{search_type}_list.csv")
-    print(f"   - {search_type.capitalize()} details: data/hotel_data/{area.replace(' ', '_')}_{search_type}_data.csv")
+    print(f"   - {search_type.capitalize()} list: data/{search_type}/{area.replace(' ', '_')}/{area.replace(' ', '_')}_{search_type}_list.csv")
+    print(f"   - {search_type.capitalize()} details: data/{search_type}/{area.replace(' ', '_')}/{area.replace(' ', '_')}_{search_type}_data.csv")
     if not skip_whatsapp:
-        print(f"   - WhatsApp verified: data/whatsapp_data/verified_whatsapp_data.csv")
-        print(f"   - WhatsApp not verified: data/whatsapp_data/not_verified_whatsapp_data.csv")
+        print(f"   - WhatsApp verified: data/whatsapp_data/{area.replace(' ', '_')}/verified_whatsapp_data.csv")
+        print(f"   - WhatsApp not verified: data/whatsapp_data/{area.replace(' ', '_')}/not_verified_whatsapp_data.csv")
 
 def main():
     """Main function"""

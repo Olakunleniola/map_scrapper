@@ -16,8 +16,21 @@ Map Scapper/
 │   ├── data_utils.py           # Data handling and CSV operations
 │   └── network_utils.py        # Network connectivity and WhatsApp verification
 ├── data/                       # Data storage
-│   ├── hotel_data/             # Hotel-related CSV files
+│   ├── hotels/                 # Hotel data (default business type)
+│   │   ├── ikeja/             # Area-specific folders
+│   │   │   ├── ikeja_hotels_list.csv
+│   │   │   └── ikeja_hotels_data.csv
+│   │   └── alimosho/
+│   │       ├── alimosho_hotels_list.csv
+│   │       └── alimosho_hotels_data.csv
+│   ├── restaurants/            # Restaurant data
+│   │   └── ikeja/
+│   │       ├── ikeja_restaurants_list.csv
+│   │       └── ikeja_restaurants_data.csv
 │   └── whatsapp_data/          # WhatsApp verification results
+│       └── ikeja/
+│           ├── verified_whatsapp_data.csv
+│           └── not_verified_whatsapp_data.csv
 ├── logs/                       # Log files for debugging
 ├── requirements.txt            # Python dependencies
 └── README.md                   # This file
@@ -80,19 +93,27 @@ python scripts/verify_whatsapp_numbers.py "Ikeja"
 
 ### Business List (Phase 1)
 
-- **File**: `data/hotel_data/{area}_{search_type}_list.csv`
+- **File**: `data/{business_type}/{area}/{area}_{business_type}_list.csv`
 - **Columns**: `name`, `link`, `search_type`, `area`, `city`, `country`
 
 ### Business Details (Phase 2)
 
-- **File**: `data/hotel_data/{area}_{search_type}_data.csv`
+- **File**: `data/{business_type}/{area}/{area}_{business_type}_data.csv`
 - **Columns**: `name`, `area`, `link`, `address`, `phone`, `website`, `email`, `image`
 
 ### WhatsApp Verification (Phase 3)
 
 - **Verified**: `data/whatsapp_data/verified_whatsapp_data.csv`
 - **Not Verified**: `data/whatsapp_data/not_verified_whatsapp_data.csv`
-- **Columns**: `area`, `name`, `address`, `phone`, `website`, `email`, `image`
+- **Columns**: `name`, `address`, `phone`, `email`, `website`, `image_url`, `link`, `area` (area is always the last column)
+- **Format Example:**
+
+  ```csv
+  Masbat De kings Hotel,"km, 1 Itokin Road, Ikorodu, Lagos",08033031048,,,https://lh3.googleusercontent.com/p/AF1QipOULCNvvLUUgLFzU_Jn8MWpy3LKfaiZ17D0whuS=w408-h271-k-no,https://www.google.com/maps/place/Masbat+De+kings+Hotel/... ,ikorodu
+  ```
+
+- The same format is used for both verified and not verified WhatsApp data files.
+- All results are appended to these files; no area subfolders are created for WhatsApp data.
 
 ## 🔧 Features
 
@@ -211,3 +232,4 @@ This project is for educational and research purposes. Please respect Google's t
 ## 🤝 Contributing
 
 Feel free to submit issues and enhancement requests!
+ 

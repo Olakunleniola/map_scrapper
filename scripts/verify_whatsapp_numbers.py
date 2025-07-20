@@ -27,26 +27,42 @@ def verify_hotel_whatsapp_numbers(area: str) -> tuple:
     Returns:
         tuple: (verified_count, not_verified_count)
     """
-    # Setup file paths - try different possible file names
-    possible_filenames = [
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_hotels_data.csv'),
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_hotel_data.csv'),
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_data.csv')
-    ]
-    
+    # Setup file paths - try different possible business types
+    possible_business_types = ['hotels', 'restaurants', 'banks', 'pharmacies', 'schools']
     input_filename = None
-    for filename in possible_filenames:
+    search_type = None
+    
+    for business_type in possible_business_types:
+        filename = get_data_file_path(business_type, area, 'data')
         if os.path.exists(filename):
             input_filename = filename
+            search_type = business_type
             break
-    verified_filename = get_data_file_path('whatsapp_data', 'verified_whatsapp_data.csv')
-    not_verified_filename = get_data_file_path('whatsapp_data', 'not_verified_whatsapp_data.csv')
+    
+    # If no business type found, try the old format for backward compatibility
+    if not input_filename:
+        old_possible_filenames = [
+            get_data_file_path('hotel_data', area, 'data', f'{area.replace(" ", "_")}_hotels_data.csv'),
+            get_data_file_path('hotel_data', area, 'data', f'{area.replace(" ", "_")}_hotel_data.csv'),
+            get_data_file_path('hotel_data', area, 'data', f'{area.replace(" ", "_")}_data.csv')
+        ]
+        
+        for filename in old_possible_filenames:
+            if os.path.exists(filename):
+                input_filename = filename
+                search_type = 'hotels'  # Default for old format
+                break
+    
+    # WhatsApp results are always stored in the root whatsapp_data folder
+    verified_filename = os.path.join('data', 'whatsapp_data', 'verified_whatsapp_data.csv')
+    not_verified_filename = os.path.join('data', 'whatsapp_data', 'not_verified_whatsapp_data.csv')
+    
+    # Ensure whatsapp_data directory exists (not area-specific)
+    ensure_data_directory('whatsapp_data')
     
     # Check if input file exists
     if not input_filename or not os.path.exists(input_filename):
-        logging.error(f"Input file not found. Tried:")
-        for filename in possible_filenames:
-            logging.error(f"  - {filename}")
+        logging.error(f"Input file not found. Tried business types: {possible_business_types}")
         return 0, 0
     
     # Load existing verified numbers to avoid duplicates
@@ -87,19 +103,18 @@ def verify_hotel_whatsapp_numbers(area: str) -> tuple:
             # Check WhatsApp
             is_whatsapp = check_whatsapp_number(driver, phone)
             
-            # Prepare data for CSV
+            # Prepare data for CSV in the required order and field names
             data = {
-                'area': area,
                 'name': hotel.get('name', ''),
                 'address': hotel.get('address', ''),
                 'phone': phone,
-                'website': hotel.get('website', ''),
                 'email': hotel.get('email', ''),
-                'image': hotel.get('image', '')
+                'website': hotel.get('website', ''),
+                'image_url': hotel.get('image_url', hotel.get('image', '')),
+                'link': hotel.get('link', ''),
+                'area': area
             }
-            
-            # Save to appropriate CSV
-            fieldnames = ['area', 'name', 'address', 'phone', 'website', 'email', 'image']
+            fieldnames = ['name', 'address', 'phone', 'email', 'website', 'image_url', 'link', 'area']
             
             if is_whatsapp:
                 if append_to_csv(verified_filename, data, fieldnames):
@@ -129,7 +144,7 @@ def main():
     # Setup logging
     setup_logging(f'verify_whatsapp_{area.replace(" ", "_").replace(",", "")}.log')
     
-    # Ensure data directories exist
+    # Only ensure whatsapp_data directory (not area-specific)
     ensure_data_directory('whatsapp_data')
     
     logging.info(f"Starting WhatsApp verification for area: {area}")

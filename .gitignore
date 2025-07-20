@@ -180,10 +180,11 @@ cython_debug/
 
 # Project-specific files
 # Data files (keep structure but ignore actual data)
-data/hotel_data/*.csv
-data/whatsapp_data/*.csv
+data/*/*/*.csv
+data/*/*.csv
 
 # Log files
+logs/*
 logs/*.log
 
 # Screenshots and temporary files
@@ -240,6 +241,7 @@ chromedriver
 *.db
 *.sqlite
 *.sqlite3
+data/*
 
 # Configuration files with sensitive data
 config.ini

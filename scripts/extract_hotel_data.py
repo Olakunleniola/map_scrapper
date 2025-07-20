@@ -8,6 +8,7 @@ import os
 import time
 import logging
 from selenium.webdriver.common.by import By
+from typing import Optional
 
 # Add parent directory to path to import lib modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,96 +16,77 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.selenium_utils import setup_driver, wait_for_element, safe_click
 from lib.data_utils import read_csv, save_csv, get_data_file_path, ensure_data_directory, setup_logging
 
-def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -> dict:
+def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -> dict | None:
     """
-    Extract detailed information from a hotel's Google Maps page
-    
-    Args:
-        driver: WebDriver instance
-        hotel_link (str): Google Maps link for the hotel
-        hotel_name (str): Name of the hotel
-        area (str): Area where hotel is located
-    
-    Returns:
-        dict: Dictionary containing hotel details
+    Extract detailed information from a hotel's Google Maps page using robust selectors and minimal warnings.
+    Matches the logic and output fields of the old script.
     """
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.common.exceptions import TimeoutException
     try:
         driver.get(hotel_link)
-        time.sleep(3)
-        
-        # Initialize hotel data
-        hotel_data = {
-            'name': hotel_name,
-            'area': area,
-            'link': hotel_link,
-            'address': '',
-            'phone': '',
-            'website': '',
-            'email': '',
-            'image': ''
-        }
-        
+        wait = WebDriverWait(driver, 15)
+        try:
+            detail_pane = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
+        except TimeoutException:
+            logging.warning(f"Detail pane did not load for {hotel_link}, skipping...")
+            return None
+        time.sleep(1)
+        # Extract name
+        try:
+            name = detail_pane.find_element(By.CSS_SELECTOR, 'h1.DUwDvf, span.iD2gKb, div.qBF1Pd span, div.qBF1Pd, h3, div[role="heading"]').text.strip()
+        except Exception:
+            name = hotel_name or ''
         # Extract address
         try:
-            address_element = wait_for_element(driver, By.CSS_SELECTOR, 'button[data-item-id*="address"]', timeout=5)
-            if address_element:
-                hotel_data['address'] = address_element.text.strip()
-        except:
-            pass
-        
-        # Extract phone number
+            address = detail_pane.find_element(By.CSS_SELECTOR, 'button[data-item-id="address"] div.Io6YTe, div.Io6YTe').text.strip()
+        except Exception:
+            address = ''
+        # Extract phone
         try:
-            phone_element = wait_for_element(driver, By.CSS_SELECTOR, 'button[data-item-id*="phone"]', timeout=5)
-            if phone_element:
-                hotel_data['phone'] = phone_element.text.strip()
-        except:
-            pass
-        
+            phone = ''
+            phone_btn = detail_pane.find_element(By.CSS_SELECTOR, 'button[aria-label^="Phone:"]')
+            if phone_btn is not None:
+                phone_label = phone_btn.get_attribute('aria-label')
+                if phone_label:
+                    phone = phone_label.replace('Phone:', '').strip()
+        except Exception:
+            phone = ''
         # Extract website
         try:
-            website_element = wait_for_element(driver, By.CSS_SELECTOR, 'a[data-item-id*="authority"]', timeout=5)
-            if website_element:
-                website_url = website_element.get_attribute('href')
-                if website_url:
-                    hotel_data['website'] = website_url
-        except:
-            pass
-        
-        # Extract email (if available)
+            website_btn = detail_pane.find_element(By.CSS_SELECTOR, 'a[aria-label^="Website:"]')
+            website = website_btn.get_attribute('href')
+        except Exception:
+            website = ''
+        # Extract email (scan all text for email pattern)
         try:
-            # Look for email in various formats
-            email_selectors = [
-                'a[href^="mailto:"]',
-                'button[data-item-id*="email"]',
-                '[data-item-id*="email"]'
-            ]
-            
-            for selector in email_selectors:
-                email_element = wait_for_element(driver, By.CSS_SELECTOR, selector, timeout=3)
-                if email_element:
-                    email_text = email_element.text.strip() or (email_element.get_attribute('href') or '').replace('mailto:', '')
-                    if '@' in email_text:
-                        hotel_data['email'] = email_text
-                        break
-        except:
-            pass
-        
-        # Extract image (if available)
+            email = ''
+            all_text = detail_pane.text
+            for word in all_text.split():
+                if '@' in word and '.' in word:
+                    email = word
+                    break
+        except Exception:
+            email = ''
+        # Extract image (first img in detail pane)
         try:
-            image_element = wait_for_element(driver, By.CSS_SELECTOR, 'img[alt*="photo"], img[alt*="image"]', timeout=5)
-            if image_element:
-                image_url = image_element.get_attribute('src')
-                if image_url:
-                    hotel_data['image'] = image_url
-        except:
-            pass
-        
-        logging.info(f"Extracted details for: {hotel_name}")
-        return hotel_data
-        
+            img_elem = detail_pane.find_element(By.CSS_SELECTOR, 'img')
+            img_url = img_elem.get_attribute('src')
+        except Exception:
+            img_url = ''
+        return {
+            'name': name,
+            'address': address,
+            'phone': phone,
+            'email': email,
+            'website': website,
+            'image_url': img_url,
+            'link': hotel_link
+        }
     except Exception as e:
         logging.error(f"Error extracting details for {hotel_name}: {e}")
-        return hotel_data
+        return None
 
 def main():
     """Main function to run the hotel data extractor"""
@@ -118,26 +100,33 @@ def main():
     # Setup logging
     setup_logging(f'extract_hotel_data_{area.replace(" ", "_").replace(",", "")}.log')
     
-    # Ensure data directory exists
-    ensure_data_directory('hotel_data')
-    
-    # Read business list - try different possible file names
-    possible_filenames = [
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_hotels_list.csv'),
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_hotel_list.csv'),
-        get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_list.csv')
-    ]
-    
+    # Read business list - try different possible business types
+    possible_business_types = ['hotels', 'restaurants', 'banks', 'pharmacies', 'schools']
     list_filename = None
-    for filename in possible_filenames:
+    
+    for business_type in possible_business_types:
+        filename = get_data_file_path(business_type, area, 'list')
         if os.path.exists(filename):
             list_filename = filename
+            search_type = business_type
             break
     
+    # If no business type found, try the old format for backward compatibility
     if not list_filename:
-        print(f"Business list file not found. Tried:")
-        for filename in possible_filenames:
-            print(f"  - {filename}")
+        old_possible_filenames = [
+            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotels_list.csv'),
+            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotel_list.csv'),
+            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_list.csv')
+        ]
+        
+        for filename in old_possible_filenames:
+            if os.path.exists(filename):
+                list_filename = filename
+                search_type = 'hotels'  # Default for old format
+                break
+    
+    if not list_filename:
+        print(f"Business list file not found. Tried business types: {possible_business_types}")
         print("Please run scrape_hotel_list.py first")
         sys.exit(1)
     
@@ -147,8 +136,9 @@ def main():
         print("No businesses found in the list file")
         sys.exit(1)
     
-    # Determine search type from the data
-    search_type = hotels[0].get('search_type', 'hotels') if hotels else 'hotels'
+    # Ensure data directory exists for the detected business type
+    ensure_data_directory(search_type, area)
+    
     logging.info(f"Starting {search_type} data extraction for {len(hotels)} businesses in {area}")
     
     # Setup WebDriver
@@ -168,14 +158,18 @@ def main():
             
             # Extract detailed information
             hotel_details = extract_hotel_details(driver, hotel_link, hotel_name, area)
-            detailed_hotels.append(hotel_details)
+            if hotel_details:
+                detailed_hotels.append(hotel_details)
+                logging.info(f"Extracted: {hotel_details}")
+            else:
+                logging.warning(f"Could not extract details for {hotel_name} due to loading issue.")
             
             # Small delay between requests
             time.sleep(2)
         
         # Save detailed data
         if detailed_hotels:
-            output_filename = get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_{search_type}_data.csv')
+            output_filename = get_data_file_path(search_type, area, 'data')
             if save_csv(detailed_hotels, output_filename):
                 print(f"Successfully extracted data for {len(detailed_hotels)} {search_type}")
                 print(f"Data saved to: {output_filename}")

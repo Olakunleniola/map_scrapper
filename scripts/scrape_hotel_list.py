@@ -57,30 +57,69 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
         search_box.send_keys(Keys.ENTER)
         time.sleep(5)
         
-        # Wait for results to load
-        results_container = wait_for_element(driver, By.CSS_SELECTOR, '[role="feed"]', timeout=15)
+        # Wait for results to load - try multiple container selectors
+        results_container = None
+        container_selectors = [
+            '[role="feed"]',
+            '//div[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "results for hotels")]',
+            '//div[contains(translate(@aria-label, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "results for")]'
+        ]
+        
+        for selector in container_selectors:
+            try:
+                if selector.startswith('//'):
+                    # XPath selector
+                    results_container = wait_for_element(driver, By.XPATH, selector, timeout=10)
+                else:
+                    # CSS selector
+                    results_container = wait_for_element(driver, By.CSS_SELECTOR, selector, timeout=10)
+                if results_container:
+                    logging.info(f"Found results container using selector: {selector}")
+                    break
+            except:
+                continue
+        
         if not results_container:
-            logging.error("Results container not found")
+            logging.error("Results container not found with any selector")
             return hotels
         
         # Scroll to load more results
         logging.info("Scrolling to load more results...")
-        scroll_count = scroll_container(driver, '[role="feed"]', scroll_pause=3)
+        last_count = 0
+        max_scrolls = 50
+        scroll_count = 0
+        
+        for i in range(max_scrolls):
+            hotel_elements = results_container.find_elements(By.CSS_SELECTOR, 'div.Nv2PK')
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", results_container)
+            logging.info(f"Scroll {i+1}: Found {len(hotel_elements)} {search_type} so far")
+            time.sleep(2.5)
+            if len(hotel_elements) == last_count:
+                logging.info("No new results loaded after scrolling. Stopping scroll loop.")
+                break
+            last_count = len(hotel_elements)
+            scroll_count = i + 1
+        
         logging.info(f"Scrolled {scroll_count} times")
         
-        # Extract hotel data
-        hotel_elements = driver.find_elements(By.CSS_SELECTOR, '[role="article"]')
+        # Extract hotel data using the working selector from main_old.py
+        hotel_elements = results_container.find_elements(By.CSS_SELECTOR, 'div.Nv2PK')
+        logging.info(f"Found {len(hotel_elements)} {search_type} elements")
+        
         logging.info(f"Found {len(hotel_elements)} hotel elements")
         
         for i, element in enumerate(hotel_elements):
             try:
-                # Extract hotel name
-                name_element = element.find_element(By.CSS_SELECTOR, 'h3, [role="heading"]')
-                name = name_element.text.strip()
+                # Find the anchor tag with the hotel link (from main_old.py)
+                link_elem = element.find_element(By.CSS_SELECTOR, 'a.hfpxzc')
+                link = link_elem.get_attribute('href')
                 
-                # Extract hotel link
-                link_element = element.find_element(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
-                link = link_element.get_attribute('href')
+                # Find the hotel name (from main_old.py)
+                try:
+                    name_elem = element.find_element(By.CSS_SELECTOR, 'div.qBF1Pd span, div.qBF1Pd, h3, div[role="heading"]')
+                    name = name_elem.text.strip()
+                except Exception:
+                    name = ''
                 
                 if name and link:
                     hotel_data = {
@@ -93,9 +132,11 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
                     }
                     hotels.append(hotel_data)
                     logging.info(f"Extracted {search_type} {i+1}: {name}")
+                else:
+                    logging.warning(f"Could not extract name or link for element {i+1}")
                 
             except Exception as e:
-                logging.warning(f"Error extracting hotel {i+1}: {e}")
+                logging.warning(f"Error extracting {search_type} {i+1}: {e}")
                 continue
         
         logging.info(f"Successfully extracted {len(hotels)} {search_type}")
@@ -126,7 +167,7 @@ def main():
     setup_logging(f'scrape_{search_type}_list_{area.replace(" ", "_")}.log')
     
     # Ensure data directory exists
-    ensure_data_directory('hotel_data')
+    ensure_data_directory(search_type, area)
     
     logging.info(f"Starting {search_type} list scraping for {area}, {city}, {country}")
     
@@ -135,7 +176,7 @@ def main():
     
     if businesses:
         # Save to CSV
-        filename = get_data_file_path('hotel_data', f'{area.replace(" ", "_")}_{search_type}_list.csv')
+        filename = get_data_file_path(search_type, area, 'list')
         if save_csv(businesses, filename):
             print(f"Successfully scraped {len(businesses)} {search_type}")
             print(f"Data saved to: {filename}")
