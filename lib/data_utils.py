@@ -6,6 +6,7 @@ import os
 import re
 import logging
 from typing import List, Dict, Set, Optional
+import pandas as pd
 
 def clean_phone_number(phone: str) -> str:
     """
@@ -25,13 +26,51 @@ def clean_phone_number(phone: str) -> str:
     
     # Handle Nigerian numbers
     if cleaned.startswith('0'):
-        cleaned = '234' + cleaned[1:]
+        cleaned = '+234' + cleaned[1:]
     elif cleaned.startswith('+234'):
-        cleaned = cleaned[1:]  # Remove the +
-    elif not cleaned.startswith('234'):
-        cleaned = '234' + cleaned
-    
+        cleaned = cleaned # leave it like that
+    elif cleaned.startswith('234'):
+        cleaned = '+' + cleaned
+    else:
+        cleaned = '+234' + cleaned
     return cleaned
+
+def format_message(name: str) -> str:
+  
+    lines = [
+        f"Dear *{name} Team*,",
+        "",
+        "I’m Engr. Olakunle Adio, founder of Our Work Laundry Solution, Lagos’ trusted partner in industrial laundry excellence. "
+        "We’re passionate about keeping your laundry operations seamless, efficient, and downtime-free.",
+        "",
+        "🚀 *Why Choose Us?*",
+        "• We specialize in expert repair, servicing, and setup of industrial laundry equipment—dryers, washers, presses, and ironing tables.",
+        "• Our mission? To ensure your hotel delivers impeccable linens and guest experiences, every time.",
+        "",
+        "🎯 *What We Offer:*",
+        "✅ *Rapid Response:* Swift solutions to minimize disruptions.",
+        "✅ *Reliable Repairs:* Cost-effective fixes that last.",
+        "✅ *Expert Setup & Maintenance:* Tailored services for peak performance.",
+        "",
+        "🏨 With a proven track record supporting hotels and laundry facilities across Lagos, we’re ready to bring our expertise to you.",
+        "",
+        "✨ *Let’s Get Started!*",
+        "📞 *Call/WhatsApp:* 09124075977",
+        "📍 *Proudly based in Lagos—available when you need us!*",
+        "🌐 *Learn more:* https://ourworklaundrysolutions.vercel.app",
+        "",
+        "Give us a chance to earn your trust with a first trial. Let’s keep your operations spotless!",
+        "",
+        "Warm regards,",
+        "Engr. Olakunle Adio",
+        "Our Work Laundry Solution",
+        "",
+        "P.S. We’re also available on WhatsApp at 09124075977"
+    ]
+
+    message = "\r\n".join(lines)
+    # Escape double quotes for CSV output if needed
+    return message.replace('"', '""')
 
 def load_existing_verified_numbers(verified_file: str, not_verified_file: str) -> Set[str]:
     """
@@ -89,7 +128,7 @@ def append_to_csv(filename: str, data: Dict, fieldnames: List[str]) -> bool:
         logging.error(f"Error appending to {filename}: {e}")
         return False
 
-def save_csv(data: List[Dict], filename: str, fieldnames: Optional[List[str]] = None) -> bool:
+def save_csv(data: List[Dict], filename: str, fieldnames: Optional[List[str]] = None, excel: Optional[bool] = False) -> bool:
     """
     Save data to CSV file
     
@@ -108,6 +147,12 @@ def save_csv(data: List[Dict], filename: str, fieldnames: Optional[List[str]] = 
     try:
         if fieldnames is None:
             fieldnames = list(data[0].keys())
+
+        if excel:
+            df = pd.DataFrame(data, columns=fieldnames)
+            df.to_excel(filename, index=False)
+            logging.info(f"Saved {len(data)} records to {filename}")
+            return True
         
         with open(filename, 'w', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -142,7 +187,7 @@ def read_csv(filename: str) -> List[Dict]:
         logging.error(f"Error reading {filename}: {e}")
         return []
 
-def get_data_file_path(business_type: str, area: str, file_type: str, filename: str | None = None) -> str:
+def get_data_file_path(business_type: str, area: str, file_type: str, filename: str | None = None, excel: Optional[bool] = False) -> str:
     """
     Get the full path for a data file based on business type and area
     
@@ -161,7 +206,10 @@ def get_data_file_path(business_type: str, area: str, file_type: str, filename: 
     
     # Generate filename if not provided
     if filename is None:
-        filename = f"{clean_area}_{clean_business_type}_{file_type}.csv"
+        if excel:
+            filename = f"{clean_area}_{clean_business_type}_{file_type}.xlsx"
+        else:
+            filename = f"{clean_area}_{clean_business_type}_{file_type}.csv"
     
     # Create path: data/{business_type}/{area}/{filename}
     return os.path.join('data', clean_business_type, clean_area, filename)

@@ -41,7 +41,7 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
         handle_cookie_consent(driver)
         
         # Find and fill search box
-        search_query = f"{search_type} near {area}, {city}, {country}"
+        search_query = f"{search_type} in {area}, {city}, {country}"
         logging.info(f"Searching for: {search_query}")
         
         # Wait for search box and enter query
@@ -93,7 +93,7 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
             hotel_elements = results_container.find_elements(By.CSS_SELECTOR, 'div.Nv2PK')
             driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", results_container)
             logging.info(f"Scroll {i+1}: Found {len(hotel_elements)} {search_type} so far")
-            time.sleep(2.5)
+            time.sleep(4.5)
             if len(hotel_elements) == last_count:
                 logging.info("No new results loaded after scrolling. Stopping scroll loop.")
                 break

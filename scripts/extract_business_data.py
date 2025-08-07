@@ -14,7 +14,7 @@ from typing import Optional
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.selenium_utils import setup_driver, wait_for_element, safe_click
-from lib.data_utils import read_csv, save_csv, get_data_file_path, ensure_data_directory, setup_logging
+from lib.data_utils import clean_phone_number, format_message, read_csv, save_csv, get_data_file_path, ensure_data_directory, setup_logging
 
 def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -> dict | None:
     """
@@ -32,15 +32,11 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
         except TimeoutException:
             logging.warning(f"Detail pane did not load for {hotel_link}, skipping...")
             return None
-        time.sleep(1)
-        # Extract name
-        try:
-            name = detail_pane.find_element(By.CSS_SELECTOR, 'h1.DUwDvf, span.iD2gKb, div.qBF1Pd span, div.qBF1Pd, h3, div[role="heading"]').text.strip()
-        except Exception:
-            name = hotel_name or ''
+        time.sleep(2)
         # Extract address
         try:
             address = detail_pane.find_element(By.CSS_SELECTOR, 'button[data-item-id="address"] div.Io6YTe, div.Io6YTe').text.strip()
+            print(address)
         except Exception:
             address = ''
         # Extract phone
@@ -76,13 +72,15 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
         except Exception:
             img_url = ''
         return {
-            'name': name,
+            'name': hotel_name,
             'address': address,
-            'phone': phone,
+            'phone': clean_phone_number(phone),
+            'message': format_message(hotel_name), 
             'email': email,
             'website': website,
             'image_url': img_url,
-            'link': hotel_link
+            'link': hotel_link,
+            'location': area,
         }
     except Exception as e:
         logging.error(f"Error extracting details for {hotel_name}: {e}")
@@ -146,7 +144,7 @@ def main():
     detailed_hotels = []
     
     try:
-        for i, hotel in enumerate(hotels):
+        for i, hotel in enumerate(hotels):              
             hotel_name = hotel.get('name', '')
             hotel_link = hotel.get('link', '')
             
@@ -160,7 +158,7 @@ def main():
             hotel_details = extract_hotel_details(driver, hotel_link, hotel_name, area)
             if hotel_details:
                 detailed_hotels.append(hotel_details)
-                logging.info(f"Extracted: {hotel_details}")
+                logging.info(f"Extracted: {hotel_details.get('name', "")}")
             else:
                 logging.warning(f"Could not extract details for {hotel_name} due to loading issue.")
             
@@ -169,8 +167,8 @@ def main():
         
         # Save detailed data
         if detailed_hotels:
-            output_filename = get_data_file_path(search_type, area, 'data')
-            if save_csv(detailed_hotels, output_filename):
+            output_filename = get_data_file_path(search_type, area, 'data', excel=True)
+            if save_csv(detailed_hotels, output_filename, excel=True):
                 print(f"Successfully extracted data for {len(detailed_hotels)} {search_type}")
                 print(f"Data saved to: {output_filename}")
             else:

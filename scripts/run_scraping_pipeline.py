@@ -25,7 +25,7 @@ def run_pipeline(area: str, search_type: str = "hotels", city: str = "Lagos", co
         country (str): Country name (e.g., 'Nigeria')
         skip_whatsapp (bool): Skip WhatsApp verification step
     """
-    print(f"🚀 Starting scraping pipeline for: {search_type} near {area}, {city}, {country}")
+    print(f"🚀 Starting scraping pipeline for: {search_type} in {area}, {city}, {country}")
     print("=" * 50)
     
     # Setup logging
