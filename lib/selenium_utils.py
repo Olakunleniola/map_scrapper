@@ -38,8 +38,40 @@ def setup_driver(headless=False, maximize=True):
     options.add_argument('--disable-extensions')
     options.add_argument('--disable-plugins')
     
+    # Set English as default language - comprehensive approach
+    options.add_argument('--lang=en-US')
+    options.add_argument('--accept-lang=en-US,en;q=0.9')
+    options.add_argument('--accept-languages=en-US,en')
+    options.add_argument('--disable-translate')
+    options.add_argument('--disable-translate-script-url')
+    
+    # Set language preferences with more comprehensive settings
+    prefs = {
+        "intl.accept_languages": "en-US,en",
+        "profile.default_content_setting_values.notifications": 2,
+        "translate": {"enabled": "false"},
+        "translate_whitelists": {},
+        "translate_blacklists": {},
+        "translate_allowlists": {},
+        "translate_blocklists": {}
+    }
+    options.add_experimental_option("prefs", prefs)
+    
+    # Additional language-related arguments
+    options.add_argument('--disable-features=TranslateUI')
+    options.add_argument('--disable-features=VizDisplayCompositor')
+    
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        
+        # Explicitly set language after driver creation
+        driver.execute_cdp_cmd('Emulation.setLocaleOverride', {'locale': 'en-US'})
+        driver.execute_cdp_cmd('Emulation.setGeolocationOverride', {
+            'latitude': 40.7128,
+            'longitude': -74.0060,
+            'accuracy': 100
+        })
+        
         return driver
     except Exception as e:
         logging.error(f"Failed to setup Chrome driver: {e}")
