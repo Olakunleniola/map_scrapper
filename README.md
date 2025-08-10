@@ -1,20 +1,19 @@
 # Map Scraper - Business Data Collection Tool
 
-A comprehensive Python tool for scraping business data from Google Maps and verifying WhatsApp numbers. The project is organized in a modular structure for better maintainability and scalability. Supports flexible search queries for any business type and location.
+A comprehensive Python tool for scraping business data from Google Maps. The project is organized in a modular structure for better maintainability and scalability. Supports flexible search queries for any business type and location.
 
 ## 🏗️ Project Structure
 
-```
+```bash
 Map Scapper/
 ├── scripts/                    # Main execution scripts
 │   ├── scrape_business_list.py    # Phase 1: Extract business names and links
 │   ├── extract_business_data.py   # Phase 2: Extract detailed business information
-│   ├── verify_whatsapp_numbers.py  # Phase 3: Verify WhatsApp numbers
-│   └── run_scraping_pipeline.py    # Complete pipeline runner
+│   └── run_scraping_pipeline.py    # Pipeline runner (currently covers Phases 1–2)
 ├── lib/                        # Utility libraries
-│   ├── selenium_utils.py       # Selenium WebDriver utilities
-│   ├── data_utils.py           # Data handling and CSV operations
-│   └── network_utils.py        # Network connectivity and WhatsApp verification
+│   ├── selenium_utils.py       # Selenium WebDriver utilities (forces English UI)
+│   ├── data_utils.py           # Data handling and CSV/Excel operations
+│   └── network_utils.py        # Network connectivity utilities
 ├── data/                       # Data storage
 │   ├── hotels/                 # Hotel data (default business type)
 │   │   ├── ikeja/             # Area-specific folders
@@ -23,14 +22,10 @@ Map Scapper/
 │   │   └── alimosho/
 │   │       ├── alimosho_hotels_list.csv
 │   │       └── alimosho_hotels_data.csv
-│   ├── restaurants/            # Restaurant data
-│   │   └── ikeja/
-│   │       ├── ikeja_restaurants_list.csv
-│   │       └── ikeja_restaurants_data.csv
-│   └── whatsapp_data/          # WhatsApp verification results
+│   └── restaurants/            # Restaurant data
 │       └── ikeja/
-│           ├── verified_whatsapp_data.csv
-│           └── not_verified_whatsapp_data.csv
+│           ├── ikeja_restaurants_list.csv
+│           └── ikeja_restaurants_data.csv
 ├── logs/                       # Log files for debugging
 ├── requirements.txt            # Python dependencies
 └── README.md                   # This file
@@ -65,9 +60,6 @@ python scripts/run_scraping_pipeline.py "Ikeja" "restaurants"
 
 # Full custom search
 python scripts/run_scraping_pipeline.py "Victoria Island" "hotels" "Lagos" "Nigeria"
-
-# Skip WhatsApp verification
-python scripts/run_scraping_pipeline.py "Ikeja" "hotels" "Lagos" "Nigeria" --skip-whatsapp
 ```
 
 ### 3. Run Individual Steps
@@ -84,9 +76,6 @@ python scripts/scrape_business_list.py "Victoria Island" "hotels" "Lagos" "Niger
 
 # Step 2: Extract detailed data
 python scripts/extract_business_data.py "Ikeja"
-
-# Step 3: Verify WhatsApp numbers
-python scripts/verify_whatsapp_numbers.py "Ikeja"
 ```
 
 ## 📊 Data Output
@@ -101,19 +90,7 @@ python scripts/verify_whatsapp_numbers.py "Ikeja"
 - **File**: `data/{business_type}/{area}/{area}_{business_type}_data.csv`
 - **Columns**: `name`, `area`, `link`, `address`, `phone`, `website`, `email`, `image`
 
-### WhatsApp Verification (Phase 3)
-
-- **Verified**: `data/whatsapp_data/verified_whatsapp_data.csv`
-- **Not Verified**: `data/whatsapp_data/not_verified_whatsapp_data.csv`
-- **Columns**: `name`, `address`, `phone`, `email`, `website`, `image_url`, `link`, `area` (area is always the last column)
-- **Format Example:**
-
-  ```csv
-  Masbat De kings Hotel,"km, 1 Itokin Road, Ikorodu, Lagos",08033031048,,,https://lh3.googleusercontent.com/p/AF1QipOULCNvvLUUgLFzU_Jn8MWpy3LKfaiZ17D0whuS=w408-h271-k-no,https://www.google.com/maps/place/Masbat+De+kings+Hotel/... ,ikorodu
-  ```
-
-- The same format is used for both verified and not verified WhatsApp data files.
-- All results are appended to these files; no area subfolders are created for WhatsApp data.
+<!-- WhatsApp verification phase has been removed from the codebase. -->
 
 ## 🔧 Features
 
@@ -132,15 +109,13 @@ python scripts/verify_whatsapp_numbers.py "Ikeja"
 ### ✅ Data Management
 
 - Automatic directory creation
-- CSV file management
-- Duplicate prevention in WhatsApp verification
+- CSV and Excel file management
 
 ### ✅ Flexible Usage
 
-- Run complete pipeline or individual steps
+- Run complete pipeline (Phases 1–2) or individual steps
 - Command-line arguments for different areas and business types
 - Custom search queries: `{search_type} near {area}, {city}, {country}`
-- Optional WhatsApp verification
 
 ## 🛠️ Technical Details
 
@@ -154,11 +129,11 @@ python scripts/verify_whatsapp_numbers.py "Ikeja"
 
 - Chrome browser installed
 - Automatic driver download via webdriver-manager
+- WebDriver forces English (en-US) UI via Chrome options and locale override
 
 ### Network Requirements
 
 - Internet connection for Google Maps access
-- DNS resolution for wa.me (WhatsApp verification)
 
 ## 📝 Usage Examples
 
@@ -194,9 +169,7 @@ The CSV files can be opened in Excel, Google Sheets, or analyzed with Python pan
 ## ⚠️ Important Notes
 
 1. **Rate Limiting**: The tool includes delays between requests to be respectful to Google's servers
-2. **Network Issues**: If WhatsApp verification fails, check your internet connection and DNS settings
-3. **Browser Automation**: Chrome will open automatically during scraping - don't close it
-4. **Data Persistence**: WhatsApp verification results are appended, not overwritten
+2. **Browser Automation**: Chrome will open automatically during scraping - don't close it
 
 ## 🐛 Troubleshooting
 
