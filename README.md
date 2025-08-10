@@ -31,19 +31,43 @@ Map Scapper/
 └── README.md                   # This file
 ```
 
+## 📥 Get the code
+
+### Option A: Fork on GitHub (recommended)
+
+1. Open the repository page on GitHub
+2. Click "Fork" to create your own copy
+3. Clone your fork locally:
+
+```bash
+git clone https://github.com/Olakunleniola/map_scrapper.git
+```
+
+```bash
+cd map_scapper
+```
+
+### Option B: Download as ZIP
+
+1. Click the green "Code" button on the repository page
+2. Choose "Download ZIP"
+3. Extract the ZIP and open the folder in your editor
+
 ## 🚀 Quick Start
 
 ### 1. Setup Environment
 
 ```bash
-# Create virtual environment
-python -m venv ourwork_env
+# Create virtual environment (choose any name you like)
+python -m venv your_env_name
 
 # Activate virtual environment
-# Windows:
-ourwork_env\Scripts\activate
+# Windows (PowerShell):
+./your_env_name/Scripts/Activate.ps1
+# or (Command Prompt):
+your_env_name\Scripts\activate.bat
 # Linux/Mac:
-source ourwork_env/bin/activate
+source your_env_name/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
