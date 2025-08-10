@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-Hotel Data Extractor - Phase 2
-Extracts detailed hotel information from Google Maps links
+Business Data Extractor - Phase 2
+Extracts detailed business information from Google Maps links
+
+Usage:
+  python scripts/extract_business_data.py <area> [business_type]
+
+Examples:
+  python scripts/extract_business_data.py "Ikeja"                # defaults to hotels
+  python scripts/extract_business_data.py "Ikeja" restaurants
 """
 import sys
 import os
@@ -87,45 +94,63 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
         return None
 
 def main():
-    """Main function to run the hotel data extractor"""
+    """Main function to run the business data extractor"""
     if len(sys.argv) < 2:
-        print("Usage: python extract_business_data.py <area>")
-        print("Example: python extract_business_data.py 'Ikeja, Lagos'")
+        print("Usage: python scripts/extract_business_data.py <area> [business_type]")
+        print("Examples:")
+        print("  python scripts/extract_business_data.py 'Ikeja'")
+        print("  python scripts/extract_business_data.py 'Ikeja' restaurants")
         sys.exit(1)
     
     area = sys.argv[1]
+    # Optional business type (default: hotels)
+    cli_business_type = sys.argv[2].lower() if len(sys.argv) > 2 and not sys.argv[2].startswith('--') else None
     
     # Setup logging
-    setup_logging(f'extract_hotel_data_{area.replace(" ", "_").replace(",", "")}.log')
+    log_suffix_area = area.replace(" ", "_").replace(",", "")
+    log_prefix_bt = (cli_business_type or 'hotels').replace(" ", "_")
+    setup_logging(f'extract_{log_prefix_bt}_data_{log_suffix_area}.log')
     
-    # Read business list - try different possible business types
-    possible_business_types = ['hotels', 'restaurants', 'banks', 'pharmacies', 'schools']
+    # Determine list file to read
     list_filename = None
+    search_type = cli_business_type or 'hotels'
     
-    for business_type in possible_business_types:
-        filename = get_data_file_path(business_type, area, 'list')
-        if os.path.exists(filename):
-            list_filename = filename
-            search_type = business_type
-            break
-    
-    # If no business type found, try the old format for backward compatibility
-    if not list_filename:
-        old_possible_filenames = [
-            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotels_list.csv'),
-            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotel_list.csv'),
-            get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_list.csv')
-        ]
-        
-        for filename in old_possible_filenames:
+    if cli_business_type:
+        # Use the explicitly requested business type
+        candidate = get_data_file_path(cli_business_type, area, 'list')
+        if os.path.exists(candidate):
+            list_filename = candidate
+        else:
+            print(f"No list file found for requested business type '{cli_business_type}' in area '{area}'.")
+            print("Please run: python scripts/scrape_business_list.py '<area>' '<business_type>'")
+            sys.exit(1)
+    else:
+        # Auto-detect existing list file among known business types
+        possible_business_types = ['hotels', 'restaurants', 'banks', 'pharmacies', 'schools']
+        for business_type in possible_business_types:
+            filename = get_data_file_path(business_type, area, 'list')
             if os.path.exists(filename):
                 list_filename = filename
-                search_type = 'hotels'  # Default for old format
+                search_type = business_type
                 break
+        
+        # If no business type found, try the old format for backward compatibility
+        if not list_filename:
+            old_possible_filenames = [
+                get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotels_list.csv'),
+                get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_hotel_list.csv'),
+                get_data_file_path('hotel_data', area, 'list', f'{area.replace(" ", "_")}_list.csv')
+            ]
+            for filename in old_possible_filenames:
+                if os.path.exists(filename):
+                    list_filename = filename
+                    search_type = 'hotels'  # Default for old format
+                    break
     
     if not list_filename:
-        print(f"Business list file not found. Tried business types: {possible_business_types}")
-        print("Please run scrape_business_list.py first")
+        print("Business list file not found.")
+        print("Please run scrape_business_list.py first, e.g.:")
+        print("  python scripts/scrape_business_list.py 'Ikeja' 'hotels'")
         sys.exit(1)
     
     hotels = read_csv(list_filename)
@@ -134,7 +159,7 @@ def main():
         print("No businesses found in the list file")
         sys.exit(1)
     
-    # Ensure data directory exists for the detected business type
+    # Ensure data directory exists for the detected/requested business type
     ensure_data_directory(search_type, area)
     
     logging.info(f"Starting {search_type} data extraction for {len(hotels)} businesses in {area}")
@@ -149,10 +174,10 @@ def main():
             hotel_link = hotel.get('link', '')
             
             if not hotel_link:
-                logging.warning(f"No link found for hotel: {hotel_name}")
+                logging.warning(f"No link found for {search_type[:-1] if search_type.endswith('s') else search_type}: {hotel_name}")
                 continue
             
-            logging.info(f"Processing hotel {i+1}/{len(hotels)}: {hotel_name}")
+            logging.info(f"Processing {search_type[:-1] if search_type.endswith('s') else search_type} {i+1}/{len(hotels)}: {hotel_name}")
             
             # Extract detailed information
             hotel_details = extract_hotel_details(driver, hotel_link, hotel_name, area)

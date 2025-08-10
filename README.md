@@ -75,7 +75,8 @@ python scripts/scrape_business_list.py "Ikeja" "restaurants"
 python scripts/scrape_business_list.py "Victoria Island" "hotels" "Lagos" "Nigeria"
 
 # Step 2: Extract detailed data
-python scripts/extract_business_data.py "Ikeja"
+python scripts/extract_business_data.py "Ikeja"            # defaults to hotels
+python scripts/extract_business_data.py "Ikeja" restaurants
 ```
 
 ## 📊 Data Output
