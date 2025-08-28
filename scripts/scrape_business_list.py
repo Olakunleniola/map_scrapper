@@ -86,14 +86,14 @@ def scrape_hotel_list(search_type: str = "hotels", area: str = "Lagos", city: st
         # Scroll to load more results
         logging.info("Scrolling to load more results...")
         last_count = 0
-        max_scrolls = 50
+        max_scrolls = 90
         scroll_count = 0
         
         for i in range(max_scrolls):
             hotel_elements = results_container.find_elements(By.CSS_SELECTOR, 'div.Nv2PK')
             driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", results_container)
             logging.info(f"Scroll {i+1}: Found {len(hotel_elements)} {search_type} so far")
-            time.sleep(4.5)
+            time.sleep(10)
             if len(hotel_elements) == last_count:
                 logging.info("No new results loaded after scrolling. Stopping scroll loop.")
                 break

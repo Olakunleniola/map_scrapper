@@ -23,7 +23,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.selenium_utils import setup_driver, wait_for_element, safe_click
 from lib.data_utils import clean_phone_number, format_message, read_csv, save_csv, get_data_file_path, ensure_data_directory, setup_logging
 
-def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -> dict | None:
+def extract_details(driver, link: str, business_name: str, area: str, business_type:str, state: str, country: str ) -> dict | None:
     """
     Extract detailed information from a hotel's Google Maps page using robust selectors and minimal warnings.
     Matches the logic and output fields of the old script.
@@ -32,12 +32,12 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.common.exceptions import TimeoutException
     try:
-        driver.get(hotel_link)
+        driver.get(link)
         wait = WebDriverWait(driver, 15)
         try:
             detail_pane = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
         except TimeoutException:
-            logging.warning(f"Detail pane did not load for {hotel_link}, skipping...")
+            logging.warning(f"Detail pane did not load for {link}, skipping...")
             return None
         time.sleep(2)
         # Extract address
@@ -79,18 +79,21 @@ def extract_hotel_details(driver, hotel_link: str, hotel_name: str, area: str) -
         except Exception:
             img_url = ''
         return {
-            'name': hotel_name,
+            'name': business_name,
             'address': address,
             'phone': clean_phone_number(phone),
-            'message': format_message(hotel_name), 
+            'message': format_message(business_name), 
             'email': email,
             'website': website,
             'image_url': img_url,
-            'link': hotel_link,
+            'link': link,
+            'business_type': business_type,
             'location': area,
+            'state': state,
+            'country': country
         }
     except Exception as e:
-        logging.error(f"Error extracting details for {hotel_name}: {e}")
+        logging.error(f"Error extracting details for {business_name}: {e}")
         return None
 
 def main():
@@ -105,7 +108,12 @@ def main():
     area = sys.argv[1]
     # Optional business type (default: hotels)
     cli_business_type = sys.argv[2].lower() if len(sys.argv) > 2 and not sys.argv[2].startswith('--') else None
-    
+    #Optional State (default: Lagos)
+    state = sys.argv[3].lower() if len(sys.argv) > 3 and not sys.argv[3].startswith('--') else "Lagos"
+    #Optional Country (default: Country)
+    country = sys.argv[4].lower() if len(sys.argv) > 4 and not sys.argv[4].startswith('--') else "Nigeria"
+
+
     # Setup logging
     log_suffix_area = area.replace(" ", "_").replace(",", "")
     log_prefix_bt = (cli_business_type or 'hotels').replace(" ", "_")
@@ -153,48 +161,48 @@ def main():
         print("  python scripts/scrape_business_list.py 'Ikeja' 'hotels'")
         sys.exit(1)
     
-    hotels = read_csv(list_filename)
+    business_data = read_csv(list_filename)
     
-    if not hotels:
+    if not business_data:
         print("No businesses found in the list file")
         sys.exit(1)
     
     # Ensure data directory exists for the detected/requested business type
     ensure_data_directory(search_type, area)
     
-    logging.info(f"Starting {search_type} data extraction for {len(hotels)} businesses in {area}")
+    logging.info(f"Starting {search_type} data extraction for {len(business_data)} businesses in {area}")
     
     # Setup WebDriver
     driver = setup_driver()
-    detailed_hotels = []
+    detailed_business_data = []
     
     try:
-        for i, hotel in enumerate(hotels):              
-            hotel_name = hotel.get('name', '')
-            hotel_link = hotel.get('link', '')
+        for i, data in enumerate(business_data):              
+            business_name = data.get('name', '')
+            link = data.get('link', '')
             
-            if not hotel_link:
-                logging.warning(f"No link found for {search_type[:-1] if search_type.endswith('s') else search_type}: {hotel_name}")
+            if not link:
+                logging.warning(f"No link found for {search_type[:-1] if search_type.endswith('s') else search_type}: {business_name}")
                 continue
             
-            logging.info(f"Processing {search_type[:-1] if search_type.endswith('s') else search_type} {i+1}/{len(hotels)}: {hotel_name}")
+            logging.info(f"Processing {search_type[:-1] if search_type.endswith('s') else search_type} {i+1}/{len(business_data)}: {business_name}")
             
             # Extract detailed information
-            hotel_details = extract_hotel_details(driver, hotel_link, hotel_name, area)
-            if hotel_details:
-                detailed_hotels.append(hotel_details)
-                logging.info(f"Extracted: {hotel_details.get('name', "")}")
+            business_details = extract_details(driver, link, business_name, area, cli_business_type or 'hotel', state, country)
+            if business_details:
+                detailed_business_data.append(business_details)
+                logging.info(f"Extracted: {business_details.get('name', "")}")
             else:
-                logging.warning(f"Could not extract details for {hotel_name} due to loading issue.")
+                logging.warning(f"Could not extract details for {business_name} due to loading issue.")
             
             # Small delay between requests
             time.sleep(2)
         
         # Save detailed data
-        if detailed_hotels:
+        if detailed_business_data:
             output_filename = get_data_file_path(search_type, area, 'data', excel=True)
-            if save_csv(detailed_hotels, output_filename, excel=True):
-                print(f"Successfully extracted data for {len(detailed_hotels)} {search_type}")
+            if save_csv(detailed_business_data, output_filename, excel=True):
+                print(f"Successfully extracted data for {len(detailed_business_data)} {search_type}")
                 print(f"Data saved to: {output_filename}")
             else:
                 print("Error saving detailed data to CSV")

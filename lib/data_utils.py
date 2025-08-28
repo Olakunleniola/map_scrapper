@@ -34,42 +34,29 @@ def clean_phone_number(phone: str) -> str:
     else:
         cleaned = '+234' + cleaned
     return cleaned
-
-def format_message(name: str) -> str:
   
+def format_message(name: str) -> str:
     lines = [
-        f"Dear *{name} Team*,",
+        f"Hi {name} Team,",
         "",
-        "I’m Engr. Olakunle Adio, founder of Our Work Laundry Solution, Lagos’ trusted partner in industrial laundry excellence. "
-        "We’re passionate about keeping your laundry operations seamless, efficient, and downtime-free.",
+        "Imagine *zero downtime* in your laundry operations 🚀",
         "",
-        "🚀 *Why Choose Us?*",
-        "• We specialize in expert repair, servicing, and setup of industrial laundry equipment—dryers, washers, presses, and ironing tables.",
-        "• Our mission? To ensure your hotel delivers impeccable linens and guest experiences, every time.",
+        "We're *Our Work Laundry Solutions* — experts in industrial washers, dryers, presses, and more. We help hotels and laundries like yours run smoothly with fast repairs and smart maintenance plans.",
         "",
-        "🎯 *What We Offer:*",
-        "✅ *Rapid Response:* Swift solutions to minimize disruptions.",
-        "✅ *Reliable Repairs:* Cost-effective fixes that last.",
-        "✅ *Expert Setup & Maintenance:* Tailored services for peak performance.",
+        "✅ **Quick, reliable repairs** that keep you running.",
+        "✅ **Preventive care** that saves you money long-term.",
+        "✅ **We come to you**, anywhere in Nigeria (and beyond).",
         "",
-        "🏨 With a proven track record supporting hotels and laundry facilities across Lagos, we’re ready to bring our expertise to you.",
+        "Let’s get your machines running at 100% — starting today.📞",
         "",
-        "✨ *Let’s Get Started!*",
-        "📞 *Call/WhatsApp:* 09124075977",
-        "📍 *Proudly based in Lagos—available when you need us!*",
-        "🌐 *Learn more:* https://ourworklaundrysolutions.vercel.app",
+        "**Call/WhatsApp:** 09124075977",
+        "**Learn more:** https://ourworklaundrysolutions.vercel.app",
         "",
-        "Give us a chance to earn your trust with a first trial. Let’s keep your operations spotless!",
-        "",
-        "Warm regards,",
-        "Engr. Olakunle Adio",
-        "Our Work Laundry Solution",
-        "",
-        "P.S. We’re also available on WhatsApp at 09124075977"
+        "Cheers,",
+        "*Our Work Laundry Solutions*"
     ]
-
+    
     message = "\r\n".join(lines)
-    # Escape double quotes for CSV output if needed
     return message.replace('"', '""')
 
 def load_existing_verified_numbers(verified_file: str, not_verified_file: str) -> Set[str]:
